@@ -56,4 +56,9 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="user:$USER_EMAIL" \
   --role="roles/storage.objectViewer"
 
+# 5. Write to Artifact Registry
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="user:$USER_EMAIL" \
+    --role="roles/artifactregistry.writer"
+
 echo "All permissions granted successfully."
