@@ -134,11 +134,13 @@ docker exec "$CONTAINER_NAME" /bin/bash -c "echo always > /sys/kernel/mm/transpa
 echo "copy results and logs back..."
 VLLM_LOG="$LOG_ROOT/$TEST_NAME"_vllm_log.txt
 BM_LOG="$LOG_ROOT/$TEST_NAME"_bm_log.txt
+PROFILE_FOLDE="$LOG_ROOT/$TEST_NAME"_profile
 docker cp "$CONTAINER_NAME:/workspace/vllm_log.txt" "$VLLM_LOG" 
 docker cp "$CONTAINER_NAME:/workspace/bm_log.txt" "$BM_LOG"
+docker cp "$CONTAINER_NAME:/workspace/profile" "$PROFILE_FOLDE"
 
 echo "gsutil cp $LOG_ROOT/* $REMOTE_LOG_ROOT"
-gsutil cp $LOG_ROOT/* $REMOTE_LOG_ROOT
+gsutil cp -r $LOG_ROOT/* $REMOTE_LOG_ROOT
 
 throughput=$(grep "Request throughput (req/s):" "$BM_LOG" | sed 's/[^0-9.]//g')
 echo "throughput for $TEST_NAME at $VLLM_HASH: $throughput"

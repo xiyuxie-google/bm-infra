@@ -5,6 +5,8 @@ set -euo pipefail
 VLLM_LOG="$WORKSPACE/vllm_log.txt"
 BM_LOG="$WORKSPACE/bm_log.txt"
 BEST_BM_LOG="$WORKSPACE/best_bm_log.txt"
+PROFILE_FOLDER="$WORKSPACE/profile"
+
 if [ -n "$TARGET_COMMIT" ]; then
   head_hash=$(git rev-parse HEAD)
   resolved_target=$(git rev-parse "$TARGET_COMMIT" 2>/dev/null)
@@ -24,9 +26,10 @@ echo "model: $MODEL"
 echo
 
 #
-# create a log folder
+# create a log and profile folder
 #
 mkdir "$WORKSPACE/log"
+mkdir -p "$PROFILE_FOLDER"
 
 # TODO: Move to image building.
 # Ingore the error because in case of using uv, the packages are installed outside this script.
@@ -55,7 +58,7 @@ if [[ "$MODEL" == "google/gemma-3-27b-it" ]]; then
   EXTRA_ARGS="--limit-mm-per-prompt {\"image\":0}"
 fi
 
-VLLM_USE_V1=1 vllm serve $MODEL \
+VLLM_USE_V1=1 VLLM_TORCH_PROFILER_DIR="$PROFILE_FOLDER" vllm serve $MODEL \
  --seed 42 \
  --disable-log-requests \
  --max-num-seqs $MAX_NUM_SEQS \
@@ -87,6 +90,13 @@ done
 EXPECTED_ETEL=${EXPECTED_ETEL:-3600000}
 NUM_PROMPTS=${NUM_PROMPTS:-1000}
 
+PROFILE_FLAG=""
+
+# Check if the PROFILE variable is numerically equal to 1
+if [[ "$PROFILE" -eq 1 ]]; then
+  PROFILE_FLAG="--profile"
+fi
+
 run_benchmark(){  
   #
   # run test
@@ -107,6 +117,7 @@ run_benchmark(){
       --sonnet-output-len $OUTPUT_LEN \
       --num-prompts ${NUM_PROMPTS} \
       --percentile-metrics ttft,tpot,itl,e2el \
+      $PROFILE_FLAG \
       --ignore-eos > "$BM_LOG" 2>&1
 
   elif [ "$DATASET" = "random" ]; then
@@ -119,6 +130,7 @@ run_benchmark(){
       --random-output-len $OUTPUT_LEN \
       --num-prompts ${NUM_PROMPTS} \
       --percentile-metrics ttft,tpot,itl,e2el \
+      $PROFILE_FLAG \
       --ignore-eos > "$BM_LOG" 2>&1
   elif [ "$DATASET" = "mmlu" ]; then
     python benchmarks/benchmark_serving.py \
@@ -131,6 +143,7 @@ run_benchmark(){
       --mmlu-method HELM \
       --num-prompts ${NUM_PROMPTS} \
       --percentile-metrics ttft,tpot,itl,e2el \
+      $PROFILE_FLAG \
       --ignore-eos > "$BM_LOG" 2>&1
   elif [ "$DATASET" = "custom-token" ]; then
     dataset_path="$WORKSPACE/dataset/${MODEL##*/}_${INPUT_LEN}_${OUTPUT_LEN}_tp${TENSOR_PARALLEL_SIZE}.json"
@@ -142,6 +155,7 @@ run_benchmark(){
       --dataset-path $dataset_path \
       --num-prompts ${NUM_PROMPTS} \
       --percentile-metrics ttft,tpot,itl,e2el \
+      $PROFILE_FLAG \
       --ignore-eos > "$BM_LOG" 2>&1
   elif [ "$DATASET" = "sharegpt" ]; then
     dataset_path="$WORKSPACE/dataset/ShareGPT_V3_unfiltered_cleaned_split.json"
@@ -164,6 +178,10 @@ run_benchmark(){
 
     if [ "$OUTPUT_LEN" -ne 0 ]; then
       ARGS+=(--sharegpt-output-len "$OUTPUT_LEN")
+    fi
+
+    if [[ "$PROFILE" -eq 1 ]]; then
+      PROFILE_FLAG="--profile"
     fi
 
     python benchmarks/benchmark_serving.py "${ARGS[@]}" > "$BM_LOG" 2>&1
