@@ -93,7 +93,7 @@ NUM_PROMPTS=${NUM_PROMPTS:-1000}
 PROFILE_FLAG=""
 
 # Check if the PROFILE variable is numerically equal to 1
-if [[ "$PROFILE" -eq 1 ]]; then
+if [[ "${PROFILE:-0}" -eq 1 ]]; then
   PROFILE_FLAG="--profile"
 fi
 
