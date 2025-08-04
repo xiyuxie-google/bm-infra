@@ -61,4 +61,9 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="user:$USER_EMAIL" \
     --role="roles/artifactregistry.writer"
 
+# 6. Permission to consume the project
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="user:$USER_EMAIL" \
+    --role="roles/serviceusage.serviceUsageConsumer"
+
 echo "All permissions granted successfully."
