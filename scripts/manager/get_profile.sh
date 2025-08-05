@@ -9,18 +9,31 @@ fi
 JOB_REFERENCE="$1"
 RUN_TYPE="$2"
 
-echo "Querying records for JobReference LIKE '$JOB_REFERENCE%'..."
+echo "Querying records for JobReference='$JOB_REFERENCE' and RunType='$RUN_TYPE'..."
 
-####
-# blaze run -c opt //cloud/tpu/tools/c2xprof:main -- \
-#   --alsologtostderr --gcs_path=gs://my-bucket/path/to/profile
+# Define the SQL query in a readable, multiline variable
+read -r -d '' SQL_QUERY << EOM
+SELECT
+    JobReference,
+    Model,
+    Status,
+    Device,
+    RecordId,
+    TensorParallelSize,
+    MaxNumSeqs,
+    MaxNumBatchedTokens,
+    MaxModelLen
+FROM
+    RunRecord
+WHERE
+    JobReference='$JOB_REFERENCE' AND RunType='$RUN_TYPE';
+EOM
 
-
-# Fetch records from Spanner, now including JobReference and RecordId
+# Fetch records from Spanner using the SQL variable
 RECORDS_JSON=$(gcloud spanner databases execute-sql "$GCP_DATABASE_ID" \
   --instance="$GCP_INSTANCE_ID" \
   --project="$GCP_PROJECT_ID" \
-  --sql="SELECT JobReference, Model, Status, Device, RecordId FROM RunRecord WHERE JobReference='$JOB_REFERENCE' AND RunType='$RUN_TYPE';" \
+  --sql="$SQL_QUERY" \
   --format=json)
 
 # Check if any records were found
@@ -31,22 +44,25 @@ if [ "$RECORD_COUNT" -eq 0 ]; then
   exit 0
 fi
 
-echo "Found $RECORD_COUNT matching records:"
+echo "Found $RECORD_COUNT matching records. Generating JSON output:"
 echo ""
 
-# Print header
-printf "%-25s %-30s %-15s %-15s %s\n" "JobReference" "Model" "Status" "Device" "Profile"
-printf "%-25s %-30s %-15s %-15s %s\n" "-------------------------" "------------------------------" "---------------" "---------------" "------------------------------------------------------------------------------------------------"
-
-# Parse JSON and print each row
-echo "$RECORDS_JSON" | jq -c '.rows[]' | while read -r row; do
-  JOB_REF=$(echo "$row" | jq -r '.[0]')
-  MODEL=$(echo "$row" | jq -r '.[1]' | awk -F/ '{print $NF}')
-  STATUS=$(echo "$row" | jq -r '.[2]')
-  DEVICE=$(echo "$row" | jq -r '.[3]')
-  RECORD_ID=$(echo "$row" | jq -r '.[4]')
-
-  PROFILE_FOLDER="gs://$GCS_BUCKET/job_logs/$RECORD_ID/static_profile"
-
-  printf "%-30s %-15s %-15s %s\n" "$MODEL" "$STATUS" "$DEVICE" "$PROFILE_FOLDER"
-done
+# Process the Spanner output into a final JSON array using a single jq command
+echo "$RECORDS_JSON" | jq --arg GCS_BUCKET "$GCS_BUCKET" '
+  .rows | map(
+    # For each row array, create a JSON object
+    {
+      "JobReference": .[0],
+      "Model": .[1] | split("/")[-1], # Get just the model name from path
+      "Status": .[2],
+      "Device": .[3],
+      "RecordId": .[4],
+      "TensorParallelSize": .[5],
+      "MaxNumSeqs": .[6],
+      "MaxNumBatchedTokens": .[7],
+      "MaxModelLen": .[8],
+      "Profile": "gs://\($GCS_BUCKET)/job_logs/\(.[4])/static_profile",
+      "upload_command": "blaze run -c opt //cloud/tpu/tools/c2xprof:main -- --alsologtostderr --gcs_path=gs://\($GCS_BUCKET)/job_logs/\(.[4])/static_profile"
+    }
+  )
+'
