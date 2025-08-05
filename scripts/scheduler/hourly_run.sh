@@ -112,8 +112,8 @@ echo LOCAL_PATCH=1 ./scripts/scheduler/create_job.sh ./cases/hourly_disagg.csv "
 LOCAL_PATCH=1 ./scripts/scheduler/create_job.sh ./cases/hourly_disagg.csv "" $TAG HOURLY_DISAGG TPU_COMMONS "PREFILL_SLICES=2;DECODE_SLICES=2;TPU_BACKEND_TYPE=jax"
 
 # torch xla with profile
-echo "./scripts/scheduler/create_job.sh ./cases/hourly.csv \"\" $TAG XPROF_XLA"
-./scripts/scheduler/create_job.sh ./cases/hourly.csv "" $TAG XPROF_XLA DEFAULT "PROFILE=1"
+# echo "./scripts/scheduler/create_job.sh ./cases/hourly.csv \"\" $TAG XPROF_XLA"
+# ./scripts/scheduler/create_job.sh ./cases/hourly.csv "" $TAG XPROF_XLA DEFAULT "PROFILE=1"
 
 echo "./scripts/cleanup_docker.sh"
 ./scripts/cleanup_docker.sh
