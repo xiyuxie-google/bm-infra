@@ -58,6 +58,26 @@ module "b200-8-queue" {
   accelerator_type     = "b200-8"
 }
 
+module "debug-1-queue" {
+  source = "../modules/queue"
+  providers = {
+    google = google
+  }
+
+  purpose              = var.purpose
+  accelerator_type     = "debug-1"
+}
+
+module "debug-2-queue" {
+  source = "../modules/queue"
+  providers = {
+    google = google
+  }
+
+  purpose              = var.purpose
+  accelerator_type     = "debug-2"
+}
+
 module "v6e-1" {
   source = "../modules/v6e"
   providers = {
