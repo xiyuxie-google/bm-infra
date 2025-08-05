@@ -40,15 +40,16 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="user:$USER_EMAIL" \
   --role="roles/pubsub.publisher"
 
+# Allows viewing/getting topics (needed to verify a topic exists)
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="user:$USER_EMAIL" \
+  --role="roles/pubsub.viewer"
+
 # 3. Read Spanner and use Spanner Studio
 echo "→ Granting Spanner read access and studio usage..."
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --member="user:$USER_EMAIL" \
-  --role="roles/spanner.viewer"
-
-gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="user:$USER_EMAIL" \
-  --role="roles/spanner.databaseReader"
+  --role="roles/spanner.databaseUser"
 
 # 4. Read GCS buckets
 echo "→ Granting GCS read access..."
