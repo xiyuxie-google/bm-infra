@@ -63,6 +63,21 @@ For example
 
 Write some script to query the database as `./scripts/manager/get_status.sh` or go to the spanner to query and see more result.
 
+### Submit a job to run with dumping profile.
+
+Use the command above with a "PROFILE=1" as ExtraEnv. For example, 
+
+```
+./scripts/scheduler/create_job.sh cases/case1.csv "309c1bb82" cuiq-0804-xprof MANUAL DEFAULT "PROFILE=1"
+```
+
+After running, use command below to get the profile path on gcs
+
+```
+./scripts/manager/get_profile.sh cuiq-0804-xprof MANUAL
+
+```
+
 ### Scan a range of vllm commits
 
 
