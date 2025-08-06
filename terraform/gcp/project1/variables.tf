@@ -31,11 +31,11 @@ variable "v6e_1_count" {
 }
 
 variable "v6e_4_count" {
-  default     = 2
+  default     = 4
 }
 
 variable "v6e_8_count" {
-  default     = 8
+  default     = 10
 }
 
 variable "branch_hash" {
