@@ -27,7 +27,7 @@ VERY_LARGE_EXPECTED_ETEL=3600000
 # export GCP_DATABASE_ID="your-database"
 
 # === Read CSV and skip header ===
-tail -n +2 "$CSV_FILE" | while read -r line; do
+tail -n +2 "$CSV_FILE" | while read -r line || [ -n "${line}" ]; do
 
   line=$(echo "$line" | tr -d '\r')
     # Safely split CSV line into variables
