@@ -89,6 +89,7 @@ done
 
 EXPECTED_ETEL=${EXPECTED_ETEL:-3600000}
 NUM_PROMPTS=${NUM_PROMPTS:-1000}
+PREFIX_LEN=${PREFIX_LEN:-0}
 
 PROFILE_FLAG=""
 
@@ -152,6 +153,19 @@ run_benchmark(){
       --model $MODEL \
       --request-rate $request_rate \
       --dataset-name custom-token \
+      --dataset-path $dataset_path \
+      --num-prompts ${NUM_PROMPTS} \
+      --percentile-metrics ttft,tpot,itl,e2el \
+      $PROFILE_FLAG \
+      --ignore-eos > "$BM_LOG" 2>&1
+  elif [ "$DATASET" = "bench-custom-token" ]; then
+    dataset_path="$WORKSPACE/dataset/${MODEL##*/}/inlen${INPUT_LEN}_outlen${OUTPUT_LEN}_prefixlen${PREFIX_LEN}.jsonl"
+    echo "dataset_path: $dataset_path"
+    python benchmarks/benchmark_serving.py \
+      --backend vllm \
+      --model $MODEL \
+      --request-rate $request_rate \
+      --dataset-name custom \
       --dataset-path $dataset_path \
       --num-prompts ${NUM_PROMPTS} \
       --percentile-metrics ttft,tpot,itl,e2el \
