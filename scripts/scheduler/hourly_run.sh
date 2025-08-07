@@ -44,7 +44,7 @@ if (( 10#$HOUR_NOW % 2 == 0 )); then
   ./scripts/scheduler/create_job.sh ./cases/hourly_gpu_1.csv "" $TAG HOURLY
 
   echo "./scripts/scheduler/create_job.sh ./cases/hourly_gpu_customer1.csv \"\" $TAG CUSTOMER1_HOURLY"
-  ./scripts/scheduler/create_job.sh ./cases/hourly_gpu_1.csv "" $TAG CUSTOMER1_HOURLY
+  ./scripts/scheduler/create_job.sh ./cases/hourly_gpu_customer1.csv "" $TAG CUSTOMER1_HOURLY
 else
   echo "./scripts/scheduler/create_job.sh ./cases/hourly_gpu_2.csv \"\" $TAG HOURLY"
   ./scripts/scheduler/create_job.sh ./cases/hourly_gpu_2.csv "" $TAG HOURLY
