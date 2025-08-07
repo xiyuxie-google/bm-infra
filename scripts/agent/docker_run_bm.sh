@@ -88,7 +88,7 @@ docker run \
  $image_tag tail -f /dev/null
 
 # =============== temp solution ===============
-if [ "$DATASET" = "custom-token" ] || [ "$DATASET" = "mmlu" ]; then
+if [ "$DATASET" = "custom-token" ] || [ "$DATASET" = "mmlu" ] || [ "$DATASET" = "bench-custom-token" ]; then
   echo "Temp solution: Syncing dataset for $DATASET"
 
   mkdir -p ./artifacts/dataset/
@@ -99,6 +99,9 @@ if [ "$DATASET" = "custom-token" ] || [ "$DATASET" = "mmlu" ]; then
   elif [ "$DATASET" = "mmlu" ]; then
     # Download mmlu directory recursively
     gsutil -m cp -r gs://$GCS_BUCKET/dataset/mmlu/* ./artifacts/dataset/
+  elif [ "$DATASET" = "bench-custom-token" ]; then
+    # Download flat files for custom-token
+    gsutil -m cp -r gs://$GCS_BUCKET/bench-dataset/* ./artifacts/dataset/
   fi
 
   echo "Copying dataset to container..."
